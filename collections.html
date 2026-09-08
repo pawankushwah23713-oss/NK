@@ -153,6 +153,7 @@
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
     gap: 24px;
+    align-items: stretch;
   }
   .product-card {
     background: var(--card);
@@ -161,6 +162,7 @@
     overflow: hidden;
     display: flex;
     flex-direction: column;
+    height: 100%;
     transition: all 0.3s ease;
   }
   .product-card:hover {
@@ -169,19 +171,19 @@
     border-color: var(--gold);
   }
   .product-thumb {
+    position: relative;
     width: 100%;
-    aspect-ratio: 1 / 1;
+    padding-top: 100%; /* forces a perfect square on every browser, no stretching */
     background: #FDFBF8;
-    padding: 12px;
-    display: flex; align-items: center; justify-content: center;
     border-bottom: 1px solid var(--line);
     overflow: hidden;
   }
   .product-thumb img {
+    position: absolute;
+    inset: 0;
     width: 100%;
     height: 100%;
     object-fit: cover;
-    border-radius: 4px;
     transition: transform 0.4s ease;
   }
   .product-card:hover .product-thumb img { transform: scale(1.06); }
@@ -199,6 +201,24 @@
     transition: all 0.2s ease; border-radius: 4px;
   }
   .inquire-btn:hover { background: var(--ink); color: var(--white); border-color: var(--ink); }
+
+  /* Show more / show less control */
+  .extra-card { display: none; }
+  .show-more-wrap { display: flex; justify-content: center; margin-top: 28px; }
+  .show-more-btn {
+    padding: 11px 32px;
+    background: transparent;
+    border: 1px solid var(--ink);
+    color: var(--ink);
+    font-size: 0.78rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    font-weight: 500;
+    cursor: pointer;
+    border-radius: 30px;
+    transition: all 0.2s ease;
+  }
+  .show-more-btn:hover { background: var(--ink); color: var(--white); }
 
   /* Footer strip */
   footer {
@@ -233,9 +253,45 @@
     nav.links, .nav-cta { display: none; }
     .menu-btn { display: block; }
   }
-  @media (max-width: 580px) {
-    .catalog-grid { grid-template-columns: 1fr 1fr; gap: 14px; }
-    .product-thumb { padding: 8px; }
+  @media (max-width: 700px) {
+    .page-hero { padding: 44px 20px 30px; }
+    .cat-tabs { padding: 0 20px 34px; gap: 8px; }
+    .cat-tab { padding: 8px 14px; font-size: 0.74rem; }
+    .cat-section { padding: 16px 0 44px; }
+    .cat-heading { margin-bottom: 18px; }
+    .cat-heading h2 { font-size: 1.5rem; }
+    .cat-desc { font-size: 0.86rem; margin-bottom: 20px; }
+
+    .catalog-grid { grid-template-columns: 1fr 1fr; gap: 12px; }
+    .product-info { padding: 10px 12px 12px; gap: 4px; }
+    .product-info .tag { font-size: 0.6rem; letter-spacing: 0.06em; }
+    .product-info h4 {
+      font-size: 0.92rem;
+      margin: 3px 0 4px;
+      line-height: 1.25;
+      display: -webkit-box;
+      -webkit-line-clamp: 1;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+    .product-info p {
+      font-size: 0.74rem;
+      margin-bottom: 10px;
+      line-height: 1.35;
+      height: 2.7em;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+    .inquire-btn { padding: 7px 6px; font-size: 0.66rem; letter-spacing: 0.03em; }
+
+    .show-more-btn { padding: 9px 24px; font-size: 0.72rem; }
+  }
+
+  @media (max-width: 380px) {
+    .catalog-grid { gap: 10px; }
+    .product-info { padding: 9px 10px 10px; }
   }
 </style>
 </head>
@@ -503,6 +559,38 @@
   </a>
 
   <script>
+    // Auto "Show More" for categories with a lot of pieces, so the page
+    // never grows too long — especially useful on mobile.
+    (function setupShowMore() {
+      const isMobile = window.matchMedia('(max-width: 700px)').matches;
+      const LIMIT = isMobile ? 4 : 8;
+
+      document.querySelectorAll('.catalog-grid').forEach(grid => {
+        const cards = Array.from(grid.children);
+        if (cards.length <= LIMIT) return;
+
+        cards.slice(LIMIT).forEach(card => card.classList.add('extra-card'));
+
+        const wrap = document.createElement('div');
+        wrap.className = 'show-more-wrap';
+
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'show-more-btn';
+        btn.textContent = `View More Designs (${cards.length - LIMIT})`;
+
+        btn.addEventListener('click', () => {
+          cards.slice(LIMIT).forEach(card => {
+            card.classList.remove('extra-card');
+          });
+          wrap.remove();
+        });
+
+        wrap.appendChild(btn);
+        grid.insertAdjacentElement('afterend', wrap);
+      });
+    })();
+
     const tabs = document.querySelectorAll('.cat-tab');
     const sections = document.querySelectorAll('.cat-section');
 
